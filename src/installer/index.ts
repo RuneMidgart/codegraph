@@ -1,9 +1,9 @@
 /**
  * CodeGraph Interactive Installer
  *
- * Multi-target: writes MCP server config + instructions for the
- * agents the user picks (Claude Code, Cursor, Codex CLI, opencode,
- * Hermes Agent).
+ * Multi-target: writes MCP server config, CLI-backed skills, and/or
+ * instructions for the agents the user picks (Claude Code, Cursor,
+ * Codex CLI, GitHub Copilot CLI, opencode, Hermes Agent).
  * Defaults to the Claude-only behavior for backwards compatibility
  * when no targets are explicitly chosen and nothing else is detected.
  *
@@ -108,7 +108,7 @@ export async function runInstallerWithOptions(opts: RunInstallerOptions): Promis
   // matches existing behavior). Skipped when --yes (assume present).
   if (!useDefaults) {
     const shouldInstallGlobally = await clack.confirm({
-      message: 'Install the codegraph CLI on your PATH? (Required so agents can launch the MCP server)',
+      message: 'Install the codegraph CLI on your PATH? (Required so agents can launch MCP or CLI-backed skills)',
       initialValue: true,
     });
     if (clack.isCancel(shouldInstallGlobally)) {
@@ -126,7 +126,7 @@ export async function runInstallerWithOptions(opts: RunInstallerOptions): Promis
         clack.log.warn('Try: sudo npm install -g @colbymchenry/codegraph');
       }
     } else {
-      clack.log.info('Skipped CLI install — agents will not be able to launch the MCP server without it');
+      clack.log.info('Skipped CLI install — agents will not be able to launch CodeGraph without it');
     }
   }
 
@@ -212,7 +212,7 @@ export async function runInstallerWithOptions(opts: RunInstallerOptions): Promis
   }
 
   const finalNote = targets.length > 0
-    ? `Done! Restart your agent${targets.length > 1 ? 's' : ''} to use CodeGraph.`
+    ? `Done! Restart or reload your agent${targets.length > 1 ? 's' : ''} to use CodeGraph.`
     : 'Done!';
   clack.outro(finalNote);
 }
@@ -294,8 +294,8 @@ export function uninstallTargets(
  * then sweeps every agent target (or the `--target` subset) and prints
  * one block per agent so the user sees exactly which providers it hit.
  *
- * Removes only what install wrote (MCP server entry, instructions
- * block, permissions) — never the `.codegraph/` index, which `codegraph
+ * Removes only what install wrote (MCP server entry, skill,
+ * instructions block, permissions) — never the `.codegraph/` index, which `codegraph
  * uninit` owns.
  */
 export async function runUninstaller(opts: RunUninstallerOptions): Promise<void> {

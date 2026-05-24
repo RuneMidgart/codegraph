@@ -1,9 +1,10 @@
 /**
  * Agent target abstraction for the installer.
  *
- * Each MCP-capable agent (Claude Code, Cursor, Codex CLI, opencode, ...)
- * implements this interface so the installer orchestrator can write the
- * right MCP-server config + instructions file + permissions for that
+ * Each agent target (Claude Code, Cursor, Codex CLI, GitHub Copilot CLI,
+ * opencode, ...) implements this interface so the installer orchestrator can
+ * write the right MCP-server config, CLI skill, instructions file, and
+ * permissions for that
  * agent without baking client-specific paths into core code. Adding a
  * new agent = one new file in `targets/` + one entry in `registry.ts`.
  *
@@ -19,7 +20,7 @@ export type Location = 'global' | 'local';
  * lookup. New targets add a value here when they're added to the
  * registry. Keep these short and lowercase.
  */
-export type TargetId = 'claude' | 'cursor' | 'codex' | 'opencode' | 'hermes';
+export type TargetId = 'claude' | 'cursor' | 'codex' | 'copilot' | 'opencode' | 'hermes';
 
 /**
  * Result of `target.detect(location)`.

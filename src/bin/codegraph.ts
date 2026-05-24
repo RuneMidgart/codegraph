@@ -16,6 +16,7 @@
  *   codegraph query <search>     Search for symbols
  *   codegraph files [options]    Show project file structure
  *   codegraph context <task>     Build context for a task
+ *   codegraph tool <tool>        Run a CodeGraph tool once from the CLI
  *   codegraph callers <symbol>   Find what calls a function/method
  *   codegraph callees <symbol>   Find what a function/method calls
  *   codegraph impact <symbol>    Analyze what code is affected by changing a symbol
@@ -1124,6 +1125,59 @@ program
   });
 
 /**
+ * codegraph tool <tool>
+ *
+ * One-shot CLI bridge for agents that cannot use MCP. Reuses the same
+ * ToolHandler as the MCP server, so outputs and validation stay in one place.
+ */
+program
+  .command('tool <tool>')
+  .description('Run a CodeGraph tool once from the CLI (for agents without MCP)')
+  .option('-p, --path <path>', 'Project path')
+  .option('--input <json>', 'JSON object to pass as the tool arguments')
+  .option('--input-file <file>', 'Read tool arguments from a JSON file; use "-" for stdin')
+  .option('--stdin', 'Read tool arguments as JSON from stdin')
+  .option('-j, --json', 'Output the raw ToolResult JSON')
+  .addHelpText('after', `
+Examples:
+  codegraph tool status --path .
+  codegraph tool context --path . --input '{"task":"map the installer","maxNodes":20}'
+  codegraph tool trace --input '{"from":"runInstaller","to":"writeInstructionsEntry"}'
+
+Known tools:
+  search, context, callers, callees, impact, node, explore, files, trace, status
+`)
+  .action(async (tool: string, options: {
+    path?: string;
+    input?: string;
+    inputFile?: string;
+    stdin?: boolean;
+    json?: boolean;
+  }) => {
+    try {
+      const { executeCliTool, parseCliToolArgs } = await import('../cli/tool-command');
+      const args = parseCliToolArgs({
+        input: options.input,
+        inputFile: options.inputFile,
+        stdin: options.stdin,
+      });
+      const output = await executeCliTool({
+        tool,
+        path: options.path,
+        args,
+        rawJson: options.json,
+      });
+      process.stdout.write(output.stdout);
+      if (output.exitCode !== 0) {
+        process.exit(output.exitCode);
+      }
+    } catch (err) {
+      error(`tool failed: ${err instanceof Error ? err.message : String(err)}`);
+      process.exit(1);
+    }
+  });
+
+/**
  * codegraph serve
  */
 program
@@ -1611,12 +1665,12 @@ program
  */
 program
   .command('install')
-  .description('Install codegraph MCP server into one or more agents (Claude Code, Cursor, Codex CLI, opencode, Hermes Agent)')
+  .description('Install codegraph into one or more agents (Claude Code, Cursor, Codex CLI, GitHub Copilot CLI, opencode, Hermes Agent)')
   .option('-t, --target <ids>', 'Target agent(s): comma-separated ids, or "auto"|"all"|"none". Default: prompt')
   .option('-l, --location <where>', 'Install location: "global" or "local". Default: prompt')
   .option('-y, --yes', 'Non-interactive: defaults to --location=global --target=auto, auto-allow on')
   .option('--no-permissions', 'Skip writing the auto-allow permissions list (Claude Code only)')
-  .option('--print-config <id>', 'Print MCP config snippet for the named agent and exit (no file writes)')
+  .option('--print-config <id>', 'Print config or skill snippet for the named agent and exit (no file writes)')
   .action(async (opts: {
     target?: string;
     location?: string;
@@ -1678,7 +1732,7 @@ program
  */
 program
   .command('uninstall')
-  .description('Remove codegraph from your agents (Claude Code, Cursor, Codex CLI, opencode, Hermes Agent)')
+  .description('Remove codegraph from your agents (Claude Code, Cursor, Codex CLI, GitHub Copilot CLI, opencode, Hermes Agent)')
   .option('-t, --target <ids>', 'Target agent(s): comma-separated ids, or "all". Default: all')
   .option('-l, --location <where>', 'Uninstall location: "global" or "local". Default: prompt')
   .option('-y, --yes', 'Non-interactive: defaults to --location=global --target=all')

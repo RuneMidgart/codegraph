@@ -10,23 +10,48 @@
 #
 # Upgrade:   re-run the same command.
 # Uninstall: curl -fsSL .../install.sh | sh -s -- --uninstall
+# Configure: curl -fsSL .../install.sh | sh -s -- --copilot
 #
 # Environment:
 #   CODEGRAPH_VERSION      release tag to install (default: latest)
 #   CODEGRAPH_INSTALL_DIR  bundle location   (default: ~/.codegraph)
 #   CODEGRAPH_BIN_DIR      symlink location  (default: ~/.local/bin)
+#   CODEGRAPH_INSTALL_TARGET  optional installer target(s), e.g. copilot
 set -eu
 
 REPO="colbymchenry/codegraph"
 INSTALL_DIR="${CODEGRAPH_INSTALL_DIR:-$HOME/.codegraph}"
 BIN_DIR="${CODEGRAPH_BIN_DIR:-$HOME/.local/bin}"
+CONFIGURE_TARGET="${CODEGRAPH_INSTALL_TARGET:-}"
 
-if [ "${1:-}" = "--uninstall" ]; then
-  rm -f "$BIN_DIR/codegraph"
-  rm -rf "$INSTALL_DIR"
-  echo "CodeGraph uninstalled (removed $INSTALL_DIR and $BIN_DIR/codegraph)."
-  exit 0
-fi
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --uninstall)
+      rm -f "$BIN_DIR/codegraph"
+      rm -rf "$INSTALL_DIR"
+      echo "CodeGraph uninstalled (removed $INSTALL_DIR and $BIN_DIR/codegraph)."
+      exit 0
+      ;;
+    --copilot|--github-copilot)
+      CONFIGURE_TARGET="copilot"
+      shift
+      ;;
+    --target)
+      [ "$#" -ge 2 ] || { echo "codegraph: --target requires a value." >&2; exit 1; }
+      CONFIGURE_TARGET="$2"
+      shift 2
+      ;;
+    --target=*)
+      CONFIGURE_TARGET="${1#--target=}"
+      shift
+      ;;
+    *)
+      echo "codegraph: unknown installer option '$1'." >&2
+      echo "usage: install.sh [--uninstall] [--copilot|--target <ids>]" >&2
+      exit 1
+      ;;
+  esac
+done
 
 # 1. Detect platform → target triple matching the release archives.
 os="$(uname -s)"
@@ -91,5 +116,10 @@ case ":$PATH:" in
     echo "  export PATH=\"$BIN_DIR:\$PATH\""
     ;;
 esac
+if [ -n "$CONFIGURE_TARGET" ]; then
+  echo ""
+  echo "Configuring CodeGraph for target(s): $CONFIGURE_TARGET"
+  "$BIN_DIR/codegraph" install --target="$CONFIGURE_TARGET" --location=global --yes
+fi
 echo ""
 echo "Done. Run: codegraph --help"

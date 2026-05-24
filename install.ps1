@@ -5,16 +5,25 @@
 #
 #   irm https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.ps1 | iex
 #
-# Re-run to upgrade. To uninstall: remove $env:LOCALAPPDATA\codegraph and drop
-# its \current\bin entry from your user PATH.
+# Re-run to upgrade. To configure GitHub Copilot after install:
+#   $env:CODEGRAPH_INSTALL_TARGET='copilot'; irm https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.ps1 | iex
+# To uninstall: remove $env:LOCALAPPDATA\codegraph and drop its \current\bin
+# entry from your user PATH.
 #
 # Environment:
 #   CODEGRAPH_VERSION      release tag to install (default: latest)
 #   CODEGRAPH_INSTALL_DIR  install location (default: %LOCALAPPDATA%\codegraph)
+#   CODEGRAPH_INSTALL_TARGET optional installer target(s), e.g. copilot
+
+param(
+  [string]$Target = $env:CODEGRAPH_INSTALL_TARGET,
+  [switch]$Copilot
+)
 
 $ErrorActionPreference = 'Stop'
 $repo = 'colbymchenry/codegraph'
 $installDir = if ($env:CODEGRAPH_INSTALL_DIR) { $env:CODEGRAPH_INSTALL_DIR } else { Join-Path $env:LOCALAPPDATA 'codegraph' }
+if ($Copilot) { $Target = 'copilot' }
 
 # 1. Detect architecture -> target matching the release archives.
 $arch = if ([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture -eq 'Arm64') { 'arm64' } else { 'x64' }
@@ -56,4 +65,9 @@ if (($userPath -split ';') -notcontains $binDir) {
 }
 
 Write-Host "Installed to $dest"
+if ($Target) {
+  $codegraph = Join-Path $binDir 'codegraph.cmd'
+  Write-Host "Configuring CodeGraph for target(s): $Target"
+  & $codegraph install --target=$Target --location=global --yes
+}
 Write-Host "Run: codegraph --help"

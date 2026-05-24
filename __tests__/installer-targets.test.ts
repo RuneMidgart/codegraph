@@ -414,6 +414,46 @@ describe('Installer targets — partial-state idempotency', () => {
     expect(after).not.toContain('enabled = true');
   });
 
+  it('copilot: global install writes a personal CodeGraph skill that uses the CLI tool command', () => {
+    const copilot = getTarget('copilot')!;
+    const result = copilot.install('global', { autoAllow: true });
+    const skillPath = path.join(tmpHome, '.copilot', 'skills', 'codegraph', 'SKILL.md');
+
+    expect(result.files.some((f) => f.path === skillPath && f.action === 'created')).toBe(true);
+    const body = fs.readFileSync(skillPath, 'utf-8');
+    expect(body).toContain('name: codegraph');
+    expect(body).toContain('allowed-tools: shell');
+    expect(body).toContain('codegraph tool context');
+    expect(body).toContain('codegraph tool trace');
+    expect(copilot.detect('global').alreadyConfigured).toBe(true);
+  });
+
+  it('copilot: local install writes a project skill under .github/skills', () => {
+    const copilot = getTarget('copilot')!;
+    const result = copilot.install('local', { autoAllow: true });
+    const skillPath = path.join(tmpCwd, '.github', 'skills', 'codegraph', 'SKILL.md');
+    const normalizedPaths = result.files.map((f) => ({
+      ...f,
+      path: f.path.replace(/\\/g, '/'),
+    }));
+
+    expect(normalizedPaths.some((f) => f.path.endsWith('/.github/skills/codegraph/SKILL.md') && f.action === 'created')).toBe(true);
+    expect(fs.readFileSync(skillPath, 'utf-8')).toContain('codegraph tool node');
+    expect(copilot.detect('local').alreadyConfigured).toBe(true);
+  });
+
+  it('copilot: uninstall removes only the generated skill directory', () => {
+    const copilot = getTarget('copilot')!;
+    const skillDir = path.join(tmpHome, '.copilot', 'skills', 'codegraph');
+    copilot.install('global', { autoAllow: true });
+    fs.writeFileSync(path.join(skillDir, 'notes.md'), 'user note\n');
+
+    const result = copilot.uninstall('global');
+
+    expect(result.files[0].action).toBe('removed');
+    expect(fs.existsSync(skillDir)).toBe(false);
+  });
+
   it('claude: local install writes ./.mcp.json (project scope), not ./.claude.json', () => {
     const claude = getTarget('claude')!;
     const result = claude.install('local', { autoAllow: false });
@@ -615,6 +655,7 @@ describe('Installer targets — registry', () => {
     expect(getTarget('claude')?.id).toBe('claude');
     expect(getTarget('cursor')?.id).toBe('cursor');
     expect(getTarget('codex')?.id).toBe('codex');
+    expect(getTarget('copilot')?.id).toBe('copilot');
     expect(getTarget('opencode')?.id).toBe('opencode');
     expect(getTarget('hermes')?.id).toBe('hermes');
     expect(getTarget('not-a-real-target')).toBeUndefined();

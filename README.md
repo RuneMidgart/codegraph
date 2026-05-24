@@ -2,7 +2,7 @@
 
 # CodeGraph
 
-### Supercharge Claude Code, Cursor, Codex, OpenCode, and Hermes Agent with Semantic Code Intelligence
+### Supercharge Claude Code, Cursor, Codex, GitHub Copilot, OpenCode, and Hermes Agent with Semantic Code Intelligence
 
 **~35% cheaper · ~70% fewer tool calls · 100% local**
 
@@ -17,6 +17,7 @@
 [![Claude Code](https://img.shields.io/badge/Claude_Code-supported-blueviolet.svg)](#supported-agents)
 [![Cursor](https://img.shields.io/badge/Cursor-supported-blueviolet.svg)](#supported-agents)
 [![Codex CLI](https://img.shields.io/badge/Codex_CLI-supported-blueviolet.svg)](#supported-agents)
+[![GitHub Copilot CLI](https://img.shields.io/badge/GitHub_Copilot_CLI-supported-blueviolet.svg)](#supported-agents)
 [![opencode](https://img.shields.io/badge/opencode-supported-blueviolet.svg)](#supported-agents)
 [![Hermes Agent](https://img.shields.io/badge/Hermes_Agent-supported-blueviolet.svg)](#supported-agents)
 
@@ -30,8 +31,14 @@
 # macOS / Linux
 curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh | sh
 
+# macOS / Linux + GitHub Copilot CLI skill mode
+curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh | sh -s -- --copilot
+
 # Windows (PowerShell)
 irm https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.ps1 | iex
+
+# Windows + GitHub Copilot CLI skill mode
+$env:CODEGRAPH_INSTALL_TARGET='copilot'; irm https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.ps1 | iex
 ```
 
 Already have Node? Use npm instead (works on any version):
@@ -41,7 +48,7 @@ npx @colbymchenry/codegraph        # zero-install, or:
 npm i -g @colbymchenry/codegraph
 ```
 
-<sub>CodeGraph bundles its own runtime — nothing to compile, no native build, works the same everywhere. The interactive installer auto-configures your agent(s) — Claude Code, Cursor, Codex CLI, opencode, Hermes Agent.</sub>
+<sub>CodeGraph bundles its own runtime — nothing to compile, no native build, works the same everywhere. The interactive installer auto-configures your agent(s) — Claude Code, Cursor, Codex CLI, GitHub Copilot CLI, opencode, Hermes Agent.</sub>
 
 ### Initialize Projects
 
@@ -64,7 +71,7 @@ Changed your mind? One command removes CodeGraph from every agent it configured:
 codegraph uninstall
 ```
 
-<sub>Reverses the installer — strips CodeGraph's MCP server config, instructions, and permissions from each configured agent. Your project indexes (`.codegraph/`) are left untouched; remove those per-project with `codegraph uninit`. Use `--target` to remove from specific agents, or `--yes` to run non-interactively.</sub>
+<sub>Reverses the installer — strips CodeGraph's MCP server config, Copilot skill, instructions, and permissions from each configured agent. Your project indexes (`.codegraph/`) are left untouched; remove those per-project with `codegraph uninit`. Use `--target` to remove from specific agents, or `--yes` to run non-interactively.</sub>
 
 ---
 
@@ -171,10 +178,10 @@ npx @colbymchenry/codegraph
 ```
 
 The installer will:
-- Ask which agent(s) to configure — auto-detects installed ones from: **Claude Code**, **Cursor**, **Codex CLI**, **opencode**, **Hermes Agent**
-- Prompt to install `codegraph` on your PATH (so agents can launch the MCP server)
+- Ask which agent(s) to configure — auto-detects installed ones from: **Claude Code**, **Cursor**, **Codex CLI**, **GitHub Copilot CLI**, **opencode**, **Hermes Agent**
+- Prompt to install `codegraph` on your PATH (so agents can launch MCP or CLI-backed skills)
 - Ask whether configs apply to all your projects or just this one
-- Write each chosen agent's MCP server config + an instructions file (e.g. `CLAUDE.md`, `.cursor/rules/codegraph.mdc`, `~/.codex/AGENTS.md`)
+- Write each chosen agent's MCP server config, CLI skill, and/or instructions file (e.g. `CLAUDE.md`, `.cursor/rules/codegraph.mdc`, `~/.codex/AGENTS.md`, `~/.copilot/skills/codegraph/SKILL.md`)
 - Set up auto-allow permissions when Claude Code is one of the targets
 - Initialize your current project (local installs only)
 
@@ -183,21 +190,22 @@ The installer will:
 ```bash
 codegraph install --yes                              # auto-detect agents, install global
 codegraph install --target=cursor,claude --yes       # explicit target list
+codegraph install --target=copilot --yes             # GitHub Copilot CLI skill mode (no MCP)
 codegraph install --target=auto --location=local     # detected agents, project-local
 codegraph install --print-config codex               # print snippet, no file writes
 ```
 
 | Flag | Values | Default |
 |---|---|---|
-| `--target` | `auto`, `all`, `none`, or csv (`claude,cursor,...`) | prompt |
+| `--target` | `auto`, `all`, `none`, or csv (`claude,cursor,codex,copilot,opencode,hermes`) | prompt |
 | `--location` | `global`, `local` | prompt |
 | `--yes` | (boolean) | prompt every step |
 | `--no-permissions` | (boolean) skip Claude auto-allow list | permissions on |
-| `--print-config <id>` | dump snippet for one agent and exit | — |
+| `--print-config <id>` | dump config or skill snippet for one agent and exit | — |
 
-### 2. Restart Your Agent
+### 2. Restart Or Reload Your Agent
 
-Restart your agent (Claude Code / Cursor / Codex CLI / opencode / Hermes Agent) for the MCP server to load.
+Restart your agent (Claude Code / Cursor / Codex CLI / opencode / Hermes Agent) for the MCP server to load. For GitHub Copilot CLI skills, run `/skills reload` or restart the session.
 
 ### 3. Initialize Projects
 
@@ -337,11 +345,20 @@ codegraph status [path]           # Show statistics
 codegraph query <search>          # Search symbols (--kind, --limit, --json)
 codegraph files [path]            # Show file structure (--format, --filter, --max-depth, --json)
 codegraph context <task>          # Build context for AI (--format, --max-nodes)
+codegraph tool <tool>             # Run an MCP-compatible tool once from the CLI (--input JSON)
 codegraph callers <symbol>        # Find what calls a function/method (--limit, --json)
 codegraph callees <symbol>        # Find what a function/method calls (--limit, --json)
 codegraph impact <symbol>         # Analyze what code is affected by changing a symbol (--depth, --json)
 codegraph affected [files...]     # Find test files affected by changes (see below)
 codegraph serve --mcp             # Start MCP server
+```
+
+`codegraph tool` is the non-MCP bridge used by the GitHub Copilot CLI skill. It accepts the same logical tool names as the MCP server, with short names such as `context`, `explore`, `node`, and `trace`:
+
+```bash
+codegraph tool context --path . --input '{"task":"map the installer","maxNodes":20,"includeCode":true}'
+codegraph tool trace --path . --input '{"from":"runInstaller","to":"writeInstructionsEntry"}'
+codegraph tool status --path .
 ```
 
 ### `codegraph affected`
@@ -453,11 +470,12 @@ See [Get Started](#get-started) for the one-line install commands.
 ## Supported Agents
 
 The interactive installer auto-detects and configures each of these — wiring up
-the MCP server and writing its instructions file:
+the MCP server or CLI skill and writing its instructions file:
 
 - **Claude Code**
 - **Cursor**
 - **Codex CLI**
+- **GitHub Copilot CLI** (skill mode, no MCP required)
 - **opencode**
 - **Hermes Agent**
 
@@ -520,7 +538,7 @@ MIT
 
 <div align="center">
 
-**Made for AI coding agents — Claude Code, Cursor, Codex CLI, opencode, and Hermes Agent**
+**Made for AI coding agents — Claude Code, Cursor, Codex CLI, GitHub Copilot CLI, opencode, and Hermes Agent**
 
 [Report Bug](https://github.com/colbymchenry/codegraph/issues) · [Request Feature](https://github.com/colbymchenry/codegraph/issues)
 
