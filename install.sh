@@ -66,7 +66,7 @@ case "$arch" in
   x86_64|amd64)  arch="x64" ;;
   *) echo "codegraph: unsupported architecture '$arch'." >&2; exit 1 ;;
 esac
-target="${os}-${arch}"
+download_target="${os}-${arch}"
 
 # 2. Resolve the version (latest release unless pinned).
 #
@@ -89,8 +89,8 @@ fi
 case "$version" in v*) ;; *) version="v$version" ;; esac
 
 # 3. Download + extract the bundle.
-url="https://github.com/$REPO/releases/download/$version/codegraph-${target}.tar.gz"
-echo "Installing CodeGraph $version ($target)..."
+url="https://github.com/$REPO/releases/download/$version/codegraph-${download_target}.tar.gz"
+echo "Installing CodeGraph $version ($download_target)..."
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 curl -fsSL "$url" -o "$tmp/cg.tar.gz" || { echo "codegraph: download failed: $url" >&2; exit 1; }

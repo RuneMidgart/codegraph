@@ -27,7 +27,7 @@ if ($Copilot) { $Target = 'copilot' }
 
 # 1. Detect architecture -> target matching the release archives.
 $arch = if ([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture -eq 'Arm64') { 'arm64' } else { 'x64' }
-$target = "win32-$arch"
+$downloadTarget = "win32-$arch"
 
 # 2. Resolve the version (latest release unless pinned).
 $version = $env:CODEGRAPH_VERSION
@@ -37,8 +37,8 @@ if (-not $version) {
 if (-not $version) { throw "codegraph: could not resolve latest version; set CODEGRAPH_VERSION." }
 
 # 3. Download + extract the bundle into a stable 'current' dir (overwritten on upgrade).
-$url = "https://github.com/$repo/releases/download/$version/codegraph-$target.zip"
-Write-Host "Installing CodeGraph $version ($target)..."
+$url = "https://github.com/$repo/releases/download/$version/codegraph-$downloadTarget.zip"
+Write-Host "Installing CodeGraph $version ($downloadTarget)..."
 $tmp = Join-Path $env:TEMP ("cg-" + [guid]::NewGuid().ToString())
 New-Item -ItemType Directory -Force -Path $tmp | Out-Null
 $zip = Join-Path $tmp 'cg.zip'
@@ -49,7 +49,7 @@ if (Test-Path $dest) { Remove-Item -Recurse -Force $dest }
 New-Item -ItemType Directory -Force -Path $dest | Out-Null
 Expand-Archive -Path $zip -DestinationPath $dest -Force
 # Archives contain a top-level codegraph-<target>\ dir; flatten it.
-$inner = Join-Path $dest "codegraph-$target"
+$inner = Join-Path $dest "codegraph-$downloadTarget"
 if (Test-Path $inner) {
   Get-ChildItem -Force $inner | Move-Item -Destination $dest -Force
   Remove-Item -Recurse -Force $inner

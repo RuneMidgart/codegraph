@@ -40,14 +40,19 @@ jobs:
           ( cd release && sha256sum codegraph-* > SHA256SUMS )
           cat release/SHA256SUMS
 
+      - name: Resolve version
+        id: ver
+        run: |
+            VERSION=$(node -p 'require("./package.json").version')
+            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+            echo "resolved version: $VERSION"
+            echo "GITHUB_OUTPUT path: $GITHUB_OUTPUT"
+            echo "----- GITHUB_OUTPUT contents -----"
+            cat "$GITHUB_OUTPUT"
+
       - name: Release notes from CHANGELOG.md
         run: |
-          if V="$(node -p 'require("./package.json").version' 2>/dev/null)"; then
-            echo "Resolved version: $V"
-          else
-            echo "Could not resolve package.json version, using Unreleased"
-            V="Unreleased"
-          fi
+          V="${{ steps.ver.outputs.version }}"
           node scripts/extract-release-notes.mjs "$V" > notes.md 2>/dev/null \
             || node scripts/extract-release-notes.mjs Unreleased > notes.md 2>/dev/null || true
           if [ ! -s notes.md ]; then
