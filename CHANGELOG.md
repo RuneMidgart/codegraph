@@ -7,7 +7,7 @@ a [GitHub Release](https://github.com/colbymchenry/codegraph/releases) tagged
 This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.9.4-copilot-skill.0] - 2026-05-25
+## [0.9.4-copilot-skill.1] - 2026-05-25
 
 ### Added
 - **Copilot skill installer target.** Adds a `copilot-skill` installer path that
