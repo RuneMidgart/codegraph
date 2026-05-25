@@ -1,0 +1,68 @@
+name: Release Fork
+
+# Fork-only release workflow.
+#
+# It always packages the copilot-skill-version branch, reads the release version
+# from package.json, and publishes GitHub Release assets only. It does not touch
+# npm.
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: copilot-skill-version
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm ci
+
+      - name: Ensure zip/unzip
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq zip unzip
+
+      - name: Build all platform bundles
+        run: |
+          for t in darwin-arm64 darwin-x64 linux-x64 linux-arm64 win32-x64 win32-arm64; do
+            bash scripts/build-bundle.sh "$t"
+          done
+          ls -lh release
+
+      - name: Generate SHA256SUMS
+        run: |
+          ( cd release && sha256sum codegraph-* > SHA256SUMS )
+          cat release/SHA256SUMS
+
+      - name: Resolve version
+        id: ver
+        run: echo "version=$(node -p \"require('./package.json').version\")" >> "$GITHUB_OUTPUT"
+
+      - name: Release notes from CHANGELOG.md
+        run: |
+          V="${{ steps.ver.outputs.version }}"
+          node scripts/extract-release-notes.mjs "$V" > notes.md 2>/dev/null \
+            || node scripts/extract-release-notes.mjs Unreleased > notes.md 2>/dev/null || true
+          if [ ! -s notes.md ]; then
+            echo "::error::No release notes in CHANGELOG.md for [$V] or [Unreleased]."
+            exit 1
+          fi
+          echo "----- release notes -----"
+          cat notes.md
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v${{ steps.ver.outputs.version }}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" release/codegraph-* release/SHA256SUMS --clobber
+          else
+            gh release create "$TAG" release/codegraph-* release/SHA256SUMS --title "$TAG" --notes-file notes.md
+          fi

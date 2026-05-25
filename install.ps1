@@ -3,10 +3,10 @@
 # Downloads a self-contained bundle (a vendored Node runtime + the app) from
 # GitHub Releases. No Node.js, no build tools required.
 #
-#   irm https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.ps1 | iex
+#   irm https://raw.githubusercontent.com/RuneMidgart/codegraph/copilot-skill-version/install.ps1 | iex
 #
 # Re-run to upgrade. To configure GitHub Copilot after install:
-#   $env:CODEGRAPH_INSTALL_TARGET='copilot'; irm https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.ps1 | iex
+#   $env:CODEGRAPH_INSTALL_TARGET='copilot'; irm https://raw.githubusercontent.com/RuneMidgart/codegraph/copilot-skill-version/install.ps1 | iex
 # To uninstall: remove $env:LOCALAPPDATA\codegraph and drop its \current\bin
 # entry from your user PATH.
 #
@@ -21,7 +21,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$repo = 'colbymchenry/codegraph'
+$repo = 'RuneMidgart/codegraph'
 $installDir = if ($env:CODEGRAPH_INSTALL_DIR) { $env:CODEGRAPH_INSTALL_DIR } else { Join-Path $env:LOCALAPPDATA 'codegraph' }
 if ($Copilot) { $Target = 'copilot' }
 

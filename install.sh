@@ -6,7 +6,7 @@
 # GitHub Releases. No Node.js, no build tools, no npm required — ideal for a
 # fresh Linux VPS over SSH.
 #
-#   curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/RuneMidgart/codegraph/copilot-skill-version/install.sh | sh
 #
 # Upgrade:   re-run the same command.
 # Uninstall: curl -fsSL .../install.sh | sh -s -- --uninstall
@@ -19,7 +19,7 @@
 #   CODEGRAPH_INSTALL_TARGET  optional installer target(s), e.g. copilot
 set -eu
 
-REPO="colbymchenry/codegraph"
+REPO="RuneMidgart/codegraph"
 INSTALL_DIR="${CODEGRAPH_INSTALL_DIR:-$HOME/.codegraph}"
 BIN_DIR="${CODEGRAPH_BIN_DIR:-$HOME/.local/bin}"
 CONFIGURE_TARGET="${CODEGRAPH_INSTALL_TARGET:-}"
