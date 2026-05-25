@@ -53,3 +53,4 @@ test-languages/
 
 nul
 release/
+.npmrc
