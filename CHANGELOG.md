@@ -7,6 +7,26 @@ a [GitHub Release](https://github.com/colbymchenry/codegraph/releases) tagged
 This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.4-copilot-skill.0] - 2026-05-25
+
+### Added
+- **Copilot skill installer target.** Adds a `copilot-skill` installer path that
+  writes a minimal skill manifest and MCP configuration so Copilot-style IDE
+  integrations can call the local CodeGraph MCP server directly. The installer
+  is surgical and preserves any existing agent config files.
+- **Quick-start instructions for Copilot skill users.** A short usage guide is
+  included in the installed instructions so editors and automation can call the
+  CodeGraph tools with sensible defaults.
+
+### Changed
+- **Installer behavior:** when installing the Copilot skill target, existing
+  MCP server entries and instruction files are preserved and merged rather than
+  replaced, avoiding disruptive edits to other agents' configurations.
+
+### Fixed
+- Minor packaging and path fixes to ensure the skill manifest is found on both
+  Windows and POSIX installs.
+
 ## [0.9.4] - 2026-05-24
 
 ### Added
